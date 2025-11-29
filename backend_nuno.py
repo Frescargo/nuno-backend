@@ -68,3 +68,4 @@ def jogos_hoje():
 @app.get("/api/jogos-amanha")
 def jogos_amanha():
     return base_games(date.today() + timedelta(days=1))
+"fix syntax error"
