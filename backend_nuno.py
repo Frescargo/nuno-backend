@@ -22,7 +22,7 @@ def base_games(day: date):
     iso = day.isoformat()
     return [
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Premier League",
             "home": "Liverpool",
             "away": "Brighton",
@@ -44,7 +44,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "LaLiga",
             "home": "Barcelona",
             "away": "Real Betis",
@@ -66,7 +66,7 @@ def base_games(day: date):
             "source": "FST + SportyTrader"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Serie A",
             "home": "Juventus",
             "away": "Bologna",
@@ -88,7 +88,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Bundesliga",
             "home": "Borussia Dortmund",
             "away": "Stuttgart",
@@ -110,7 +110,7 @@ def base_games(day: date):
             "source": "FST + Skores"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Ligue 1",
             "home": "Marseille",
             "away": "Nice",
@@ -132,7 +132,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Primeira Liga",
             "home": "Sporting CP",
             "away": "Guimarães",
@@ -154,7 +154,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Eredivisie",
             "home": "Feyenoord",
             "away": "AZ Alkmaar",
@@ -176,7 +176,7 @@ def base_games(day: date):
             "source": "FST"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Championship",
             "home": "Southampton",
             "away": "Cardiff",
@@ -198,7 +198,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "MLS",
             "home": "LA Galaxy",
             "away": "Austin FC",
@@ -220,7 +220,7 @@ def base_games(day: date):
             "source": "FST + Skores"
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Saudi Pro League",
             "home": "Al Nassr",
             "away": "Al Ittihad",
@@ -242,7 +242,7 @@ def base_games(day: date):
             "source": "Stats + FST"
         }
     ]{
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Premier League",
             "home": "Arsenal",
             "away": "Chelsea",
@@ -264,7 +264,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "LaLiga",
             "home": "Real Madrid",
             "away": "Sevilla",
@@ -286,7 +286,7 @@ def base_games(day: date):
             "source": "Andys + FST",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Serie A",
             "home": "Inter",
             "away": "Napoli",
@@ -308,7 +308,7 @@ def base_games(day: date):
             "source": "Skores + SportyTrader",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Bundesliga",
             "home": "Bayern Munich",
             "away": "RB Leipzig",
@@ -330,7 +330,7 @@ def base_games(day: date):
             "source": "FreeSuperTips",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Ligue 1",
             "home": "PSG",
             "away": "Lyon",
@@ -352,7 +352,7 @@ def base_games(day: date):
             "source": "FST + Skores",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Primeira Liga",
             "home": "Benfica",
             "away": "Braga",
@@ -374,7 +374,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Eredivisie",
             "home": "Ajax",
             "away": "PSV",
@@ -396,7 +396,7 @@ def base_games(day: date):
             "source": "FST + SportyTrader",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Championship",
             "home": "Leeds",
             "away": "Leicester",
@@ -426,7 +426,7 @@ def base_games(day: date):
             games_today.append(game)
 
     return games_today
-            "date": iso,
+            "date": day.isoformat(),
             "league": "Saudi Pro League",
             "home": "Al Nassr",
             "away": "Al Hilal",
@@ -448,7 +448,7 @@ def base_games(day: date):
             "source": "Stats + FST",
         },
         {
-            "date": iso,
+            "date": day.isoformat(),
             "league": "CAF Champions League",
             "home": "MC Alger",
             "away": "Mamelodi Sundowns",
