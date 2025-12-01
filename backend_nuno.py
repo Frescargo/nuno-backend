@@ -12,8 +12,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 def base_games(day: date):
+    """
+    MODELO MANUAL PARA O NUNO
+    ...
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date, timedelta
@@ -57,7 +59,7 @@ def base_games(day: date):
             "ouOdd": 1.50,
             "valueOU": 0.03,
             "confidenceOU": 4,
-            "source": "FreeSuperTips + Skores"
+            "source": "FreeSuperTips + Skores",
         },
         {
             "date": iso,
@@ -79,7 +81,7 @@ def base_games(day: date):
             "ouOdd": 1.55,
             "valueOU": 0.02,
             "confidenceOU": 3,
-            "source": "FST + SportyTrader"
+            "source": "FST + SportyTrader",
         },
         {
             "date": iso,
@@ -101,7 +103,7 @@ def base_games(day: date):
             "ouOdd": 1.75,
             "valueOU": 0.03,
             "confidenceOU": 4,
-            "source": "SportyTrader"
+            "source": "SportyTrader",
         },
         {
             "date": iso,
@@ -123,7 +125,7 @@ def base_games(day: date):
             "ouOdd": 1.55,
             "valueOU": 0.03,
             "confidenceOU": 4,
-            "source": "FST + Skores"
+            "source": "FST + Skores",
         },
         {
             "date": iso,
@@ -145,7 +147,7 @@ def base_games(day: date):
             "ouOdd": 1.70,
             "valueOU": 0.02,
             "confidenceOU": 3,
-            "source": "SportyTrader"
+            "source": "SportyTrader",
         },
         {
             "date": iso,
@@ -167,7 +169,7 @@ def base_games(day: date):
             "ouOdd": 1.60,
             "valueOU": 0.02,
             "confidenceOU": 3,
-            "source": "FreeSuperTips + Skores"
+            "source": "FreeSuperTips + Skores",
         },
         {
             "date": iso,
@@ -189,7 +191,7 @@ def base_games(day: date):
             "ouOdd": 1.60,
             "valueOU": 0.03,
             "confidenceOU": 4,
-            "source": "FST"
+            "source": "FST",
         },
         {
             "date": iso,
@@ -211,7 +213,7 @@ def base_games(day: date):
             "ouOdd": 1.85,
             "valueOU": 0.02,
             "confidenceOU": 3,
-            "source": "SportyTrader"
+            "source": "SportyTrader",
         },
         {
             "date": iso,
@@ -233,7 +235,7 @@ def base_games(day: date):
             "ouOdd": 1.65,
             "valueOU": 0.04,
             "confidenceOU": 4,
-            "source": "FST + Skores"
+            "source": "FST + Skores",
         },
         {
             "date": iso,
@@ -255,228 +257,7 @@ def base_games(day: date):
             "ouOdd": 1.75,
             "valueOU": 0.03,
             "confidenceOU": 4,
-            "source": "Stats + FST"
-        },
-        # JOGOS EXTRA
-        {
-            "date": iso,
-            "league": "Premier League",
-            "home": "Arsenal",
-            "away": "Chelsea",
-            "odd1": 2.05,
-            "oddX": 3.50,
-            "odd2": 3.40,
-            "tipMain": "1",          # 1X2 principal
-            "oddMain": 2.05,         # odd do tip 1X2
-            "valueMain": 0.06,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",        # BTTS
-            "bttsOdd": 1.85,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",     # Over/Under
-            "ouOdd": 1.90,
-            "valueOU": 0.03,
-            "confidenceOU": 3,
-            "source": "FreeSuperTips + Skores",
-        },
-        {
-            "date": iso,
-            "league": "LaLiga",
-            "home": "Real Madrid",
-            "away": "Sevilla",
-            "odd1": 1.55,
-            "oddX": 4.20,
-            "odd2": 6.00,
-            "tipMain": "1",
-            "oddMain": 1.55,
-            "valueMain": 0.04,
-            "confidenceMain": 4,
-            "bttsTip": "Não",
-            "bttsOdd": 1.95,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.80,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "Andys + FST",
-        },
-        {
-            "date": iso,
-            "league": "Serie A",
-            "home": "Inter",
-            "away": "Napoli",
-            "odd1": 2.10,
-            "oddX": 3.25,
-            "odd2": 3.40,
-            "tipMain": "1",
-            "oddMain": 2.10,
-            "valueMain": 0.05,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.75,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.95,
-            "valueOU": 0.03,
-            "confidenceOU": 3,
-            "source": "Skores + SportyTrader",
-        },
-        {
-            "date": iso,
-            "league": "Bundesliga",
-            "home": "Bayern Munich",
-            "away": "RB Leipzig",
-            "odd1": 1.65,
-            "oddX": 4.20,
-            "odd2": 4.80,
-            "tipMain": "1",
-            "oddMain": 1.65,
-            "valueMain": 0.04,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.60,
-            "valueBTTS": 0.01,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 3.5",
-            "ouOdd": 2.10,
-            "valueOU": 0.03,
-            "confidenceOU": 3,
-            "source": "FreeSuperTips",
-        },
-        {
-            "date": iso,
-            "league": "Ligue 1",
-            "home": "PSG",
-            "away": "Lyon",
-            "odd1": 1.45,
-            "oddX": 4.80,
-            "odd2": 6.50,
-            "tipMain": "1",
-            "oddMain": 1.45,
-            "valueMain": 0.03,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.70,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.65,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "FST + Skores",
-        },
-        {
-            "date": iso,
-            "league": "Primeira Liga",
-            "home": "Benfica",
-            "away": "Braga",
-            "odd1": 1.75,
-            "oddX": 3.60,
-            "odd2": 4.50,
-            "tipMain": "1",
-            "oddMain": 1.75,
-            "valueMain": 0.05,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.85,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 4,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.80,
-            "valueOU": 0.03,
-            "confidenceOU": 3,
-            "source": "FreeSuperTips + Skores",
-        },
-        {
-            "date": iso,
-            "league": "Eredivisie",
-            "home": "Ajax",
-            "away": "PSV",
-            "odd1": 2.60,
-            "oddX": 3.80,
-            "odd2": 2.40,
-            "tipMain": "BTTS",       # foco BTTS
-            "oddMain": 1.60,
-            "valueMain": 0.03,
-            "confidenceMain": 4,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.60,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 4,
-            "ouTip": "Over 3.5",
-            "ouOdd": 2.05,
-            "valueOU": 0.03,
-            "confidenceOU": 3,
-            "source": "FST + SportyTrader",
-        },
-        {
-            "date": iso,
-            "league": "Championship",
-            "home": "Leeds",
-            "away": "Leicester",
-            "odd1": 2.40,
-            "oddX": 3.30,
-            "odd2": 2.80,
-            "tipMain": "1X",         # duplo resultado
-            "oddMain": 1.55,
-            "valueMain": 0.02,
-            "confidenceMain": 3,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.75,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.90,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "Own model",
-        },
-        {
-            "date": iso,
-            "league": "Saudi Pro League",
-            "home": "Al Nassr",
-            "away": "Al Hilal",
-            "odd1": 2.60,
-            "oddX": 3.40,
-            "odd2": 2.60,
-            "tipMain": "BTTS",
-            "oddMain": 1.55,
-            "valueMain": 0.03,
-            "confidenceMain": 3,
-            "bttsTip": "Sim",
-            "bttsOdd": 1.55,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
-            "ouTip": "Over 2.5",
-            "ouOdd": 1.75,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
             "source": "Stats + FST",
-        },
-        {
-            "date": iso,
-            "league": "CAF Champions League",
-            "home": "MC Alger",
-            "away": "Mamelodi Sundowns",
-            "odd1": 2.75,
-            "oddX": 2.90,
-            "odd2": 2.45,
-            "tipMain": "Under 2.5",
-            "oddMain": 1.85,
-            "valueMain": 0.04,
-            "confidenceMain": 3,
-            "bttsTip": "Não",
-            "bttsOdd": 1.70,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
-            "ouTip": "Under 2.5",
-            "ouOdd": 1.85,
-            "valueOU": 0.04,
-            "confidenceOU": 3,
-            "source": "Skores + SportyTrader",
         },
     ]
 
@@ -488,4 +269,4 @@ def jogos_hoje():
 
 @app.get("/api/jogos-amanha")
 def jogos_amanha():
-    return base_games(date.today() + timedelta(days=1))
+    return base_games(date.today() + timedelta(days=1))    
