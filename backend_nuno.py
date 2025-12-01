@@ -14,6 +14,22 @@ app.add_middleware(
 
 
 def base_games(day: date):
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import date, timedelta
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def base_games(day: date):
     """
     MODELO MANUAL PARA O NUNO
     - Todos os jogos usam a mesma data (o dia recebido em `day`).
@@ -22,7 +38,7 @@ def base_games(day: date):
     iso = day.isoformat()
     return [
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Premier League",
             "home": "Liverpool",
             "away": "Brighton",
@@ -44,7 +60,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "LaLiga",
             "home": "Barcelona",
             "away": "Real Betis",
@@ -66,7 +82,7 @@ def base_games(day: date):
             "source": "FST + SportyTrader"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Serie A",
             "home": "Juventus",
             "away": "Bologna",
@@ -88,7 +104,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Bundesliga",
             "home": "Borussia Dortmund",
             "away": "Stuttgart",
@@ -110,7 +126,7 @@ def base_games(day: date):
             "source": "FST + Skores"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Ligue 1",
             "home": "Marseille",
             "away": "Nice",
@@ -132,7 +148,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Primeira Liga",
             "home": "Sporting CP",
             "away": "Guimarães",
@@ -154,7 +170,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Eredivisie",
             "home": "Feyenoord",
             "away": "AZ Alkmaar",
@@ -176,7 +192,7 @@ def base_games(day: date):
             "source": "FST"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Championship",
             "home": "Southampton",
             "away": "Cardiff",
@@ -198,7 +214,7 @@ def base_games(day: date):
             "source": "SportyTrader"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "MLS",
             "home": "LA Galaxy",
             "away": "Austin FC",
@@ -220,7 +236,7 @@ def base_games(day: date):
             "source": "FST + Skores"
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Saudi Pro League",
             "home": "Al Nassr",
             "away": "Al Ittihad",
@@ -240,9 +256,10 @@ def base_games(day: date):
             "valueOU": 0.03,
             "confidenceOU": 4,
             "source": "Stats + FST"
-        }
-    ]{
-            "date": day.isoformat(),
+        },
+        # JOGOS EXTRA
+        {
+            "date": iso,
             "league": "Premier League",
             "home": "Arsenal",
             "away": "Chelsea",
@@ -264,7 +281,7 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "LaLiga",
             "home": "Real Madrid",
             "away": "Sevilla",
@@ -286,7 +303,7 @@ def base_games(day: date):
             "source": "Andys + FST",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Serie A",
             "home": "Inter",
             "away": "Napoli",
@@ -308,7 +325,7 @@ def base_games(day: date):
             "source": "Skores + SportyTrader",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Bundesliga",
             "home": "Bayern Munich",
             "away": "RB Leipzig",
@@ -330,7 +347,7 @@ def base_games(day: date):
             "source": "FreeSuperTips",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Ligue 1",
             "home": "PSG",
             "away": "Lyon",
@@ -352,7 +369,7 @@ def base_games(day: date):
             "source": "FST + Skores",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Primeira Liga",
             "home": "Benfica",
             "away": "Braga",
@@ -374,14 +391,14 @@ def base_games(day: date):
             "source": "FreeSuperTips + Skores",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Eredivisie",
             "home": "Ajax",
             "away": "PSV",
             "odd1": 2.60,
             "oddX": 3.80,
             "odd2": 2.40,
-            "tipMain": "BTTS",       # aqui o foco é BTTS
+            "tipMain": "BTTS",       # foco BTTS
             "oddMain": 1.60,
             "valueMain": 0.03,
             "confidenceMain": 4,
@@ -396,7 +413,7 @@ def base_games(day: date):
             "source": "FST + SportyTrader",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "Championship",
             "home": "Leeds",
             "away": "Leicester",
@@ -417,16 +434,8 @@ def base_games(day: date):
             "confidenceOU": 3,
             "source": "Own model",
         },
-        {def base_games(day):
-    """Filtra os jogos para o dia escolhido"""
-    games_today = []
-
-    for game in jogos_base:
-        if game["date"] == day.strftime("%Y-%m-%d"):
-            games_today.append(game)
-
-    return games_today
-            "date": day.isoformat(),
+        {
+            "date": iso,
             "league": "Saudi Pro League",
             "home": "Al Nassr",
             "away": "Al Hilal",
@@ -448,7 +457,7 @@ def base_games(day: date):
             "source": "Stats + FST",
         },
         {
-            "date": day.isoformat(),
+            "date": iso,
             "league": "CAF Champions League",
             "home": "MC Alger",
             "away": "Mamelodi Sundowns",
