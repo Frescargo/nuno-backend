@@ -12,24 +12,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def base_games(day: date):
-    """
-    MODELO MANUAL PARA O NUNO
-    ...
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import date, timedelta
-
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 def base_games(day: date):
     """
