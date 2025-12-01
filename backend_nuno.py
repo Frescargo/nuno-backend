@@ -14,7 +14,6 @@ app.add_middleware(
 
 
 def base_games(day: date):
-def base_games(day: date):
     """
     MODELO MANUAL PARA O NUNO
     - Se o dia for hoje -> devolve jogos de hoje.
@@ -262,6 +261,15 @@ def base_games(day: date):
     # Qualquer outro dia -> sem jogos
     return []
 
+
+@app.get("/")
+def root():
+    return {
+        "message": "Backend Nuno OK",
+        "endpoints": ["/api/jogos-hoje", "/api/jogos-amanha"],
+    }
+
+
 @app.get("/api/jogos-hoje")
 def jogos_hoje():
     return base_games(date.today())
@@ -269,4 +277,4 @@ def jogos_hoje():
 
 @app.get("/api/jogos-amanha")
 def jogos_amanha():
-    return base_games(date.today() + timedelta(days=1))    
+    return base_games(date.today() + timedelta(days=1))
