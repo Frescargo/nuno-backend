@@ -417,7 +417,15 @@ def base_games(day: date):
             "confidenceOU": 3,
             "source": "Own model",
         },
-        {
+        {def base_games(day):
+    """Filtra os jogos para o dia escolhido"""
+    games_today = []
+
+    for game in jogos_base:
+        if game["date"] == day.strftime("%Y-%m-%d"):
+            games_today.append(game)
+
+    return games_today
             "date": iso,
             "league": "Saudi Pro League",
             "home": "Al Nassr",
