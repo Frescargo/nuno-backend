@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 app = FastAPI()
 
-# CORS para permitir o painel no telemóvel / Netlify aceder à API
+# CORS para permitir o painel aceder à API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
