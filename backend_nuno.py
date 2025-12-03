@@ -4,7 +4,74 @@ from datetime import date, timedelta
 import requests
 import csv
 import io
+def ai_predict_from_last5(game: dict) -> dict:
+    """
+    IA baseada nos últimos 5 jogos de casa e fora.
+    Não usa API externa (versão grátis).
+    """
+    gf_home = game.get("home_last5_gf", 0) or 0
+    ga_home = game.get("home_last5_ga", 0) or 0
+    gf_away = game.get("away_last5_gf", 0) or 0
+    ga_away = game.get("away_last5_ga", 0) or 0
+    btts_home = game.get("home_last5_btts", 0) or 0
+    btts_away = game.get("away_last5_btts", 0) or 0
 
+    # Médias por jogo
+    home_avg_gf = gf_home / 5
+    home_avg_ga = ga_home / 5
+    away_avg_gf = gf_away / 5
+    away_avg_ga = ga_away / 5
+
+    # ---------- IA TIP 1X2 ----------
+    if home_avg_gf - away_avg_gf > 0.6 and home_avg_ga <= away_avg_ga + 0.2:
+        ai_tip_main = "1"
+    elif away_avg_gf - home_avg_gf > 0.6 and away_avg_ga <= home_avg_ga + 0.2:
+        ai_tip_main = "2"
+    else:
+        ai_tip_main = "X"
+
+    # ---------- BTTS ----------
+    btts_total = btts_home + btts_away  # 0–10
+    if btts_total >= 6:
+        ai_btts = "Sim"
+    elif btts_total <= 3:
+        ai_btts = "Não"
+    else:
+        ai_btts = "Indefinido"
+
+    # ---------- OVER/UNDER ----------
+    soma_medias = home_avg_gf + away_avg_gf
+    if soma_medias >= 3:
+        ai_ou = "Over 2.5"
+    elif soma_medias <= 2:
+        ai_ou = "Under 2.5"
+    else:
+        ai_ou = "Neutro"
+
+    # ---------- CONFIANÇA (0–10) ----------
+    confiança = 5
+    if ai_tip_main in ("1", "2") and abs(home_avg_gf - away_avg_gf) > 0.8:
+        confiança += 2
+    if ai_btts in ("Sim", "Não") and btts_total >= 7:
+        confiança += 1
+    if ai_ou in ("Over 2.5", "Under 2.5") and abs(soma_medias - 2.5) > 0.8:
+        confiança += 1
+
+    confiança = max(1, min(10, confiança))
+
+    comentario = (
+        f"IA: Casa {gf_home}-{ga_home} golos nos últimos 5; "
+        f"Fora {gf_away}-{ga_away}; BTTS total {btts_total}/10."
+    )
+
+    return {
+        "aiTipMain": ai_tip_main,
+        "aiBTTS": ai_btts,
+        "aiOU": ai_ou,
+        "aiConfidence": confiança,
+        "aiComment": comentario,
+    }
+    ...
 app = FastAPI()
 
 app.add_middleware(
