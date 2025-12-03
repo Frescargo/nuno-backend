@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 app = FastAPI()
 
-# Permitir acesso externo (para o painel)
+# CORS para permitir acesso do painel no telemóvel / PC
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,11 +13,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------------
-#   BASE GAMES (MANUAL)
-# -------------------------
+
+# -----------------------------------
+#   BASE DE JOGOS (MANUAL)
+# -----------------------------------
 def base_games(day: date):
     iso = day.isoformat()
+
     return [
         {
             "date": iso,
@@ -152,9 +154,9 @@ def base_games(day: date):
     ]
 
 
-# -------------------------
-#     IA SIMPLES
-# -------------------------
+# -----------------------------------
+#      IA SIMPLES (AUTOMÁTICA)
+# -----------------------------------
 def add_ai_to_games(games):
     jogos = []
 
@@ -167,7 +169,7 @@ def add_ai_to_games(games):
         ou_tip = (g.get("ouTip") or "").lower()
         ou_odd = g.get("ouOdd") or 0
 
-        # IA Tip principal (odd mais baixa)
+        # TIP PRINCIPAL (odd mais baixa)
         odds_validas = [v for v in [odd1, oddX, odd2] if v]
         if odds_validas:
             menor = min(odds_validas)
@@ -177,7 +179,7 @@ def add_ai_to_games(games):
         else:
             ai_main = "Indefinido"
 
-        # IA BTTS
+        # BTTS
         if "over" in ou_tip and ou_odd <= 1.70:
             ai_btts = "Sim"
         elif "under" in ou_tip and ou_odd <= 1.80:
@@ -185,7 +187,7 @@ def add_ai_to_games(games):
         else:
             ai_btts = "Indefinido"
 
-        # IA Over/Under
+        # Over / Under
         if ou_tip:
             ai_ou = g["ouTip"]
         else:
@@ -193,8 +195,10 @@ def add_ai_to_games(games):
 
         # Confiança
         conf = 5
-        if odd1 <= 1.60 or odd2 <= 1.60: conf += 2
-        if ou_odd <= 1.60: conf += 1
+        if odd1 <= 1.60 or odd2 <= 1.60:
+            conf += 2
+        if ou_odd <= 1.60:
+            conf += 1
         conf = max(3, min(10, conf))
 
         g["aiTipMain"] = ai_main
@@ -208,12 +212,12 @@ def add_ai_to_games(games):
     return jogos
 
 
-# -------------------------
-#     ENDPOINTS
-# -------------------------
+# -----------------------------------
+#         ENDPOINTS
+# -----------------------------------
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Backend Nuno + IA ativo"}
+    return {"status": "online", "message": "Backend Nuno + IA ativo."}
 
 
 @app.get("/api/jogos-hoje")
