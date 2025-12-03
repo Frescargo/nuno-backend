@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 app = FastAPI()
 
-# CORS para permitir o painel aceder à API
+# Permitir acesso externo (para o painel)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,12 +13,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# -------------------------
+#   BASE GAMES (MANUAL)
+# -------------------------
 def base_games(day: date):
-    """
-    Jogos base (manuais) todos com a mesma data (day).
-    Mais tarde podemos trocar isto para ler da Google Sheet.
-    """
     iso = day.isoformat()
     return [
         {
@@ -30,18 +28,9 @@ def base_games(day: date):
             "oddX": 4.30,
             "odd2": 5.80,
             "tipMain": "1",
-            "oddMain": 1.55,
-            "valueMain": 0.06,
-            "confidenceMain": 4,
             "bttsTip": "Sim",
-            "bttsOdd": 1.70,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.50,
-            "valueOU": 0.03,
-            "confidenceOU": 4,
-            "source": "FreeSuperTips + Skores",
+            "ouOdd": 1.50
         },
         {
             "date": iso,
@@ -52,18 +41,9 @@ def base_games(day: date):
             "oddX": 4.80,
             "odd2": 7.50,
             "tipMain": "1",
-            "oddMain": 1.40,
-            "valueMain": 0.05,
-            "confidenceMain": 5,
             "bttsTip": "Sim",
-            "bttsOdd": 1.75,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.55,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "FST + SportyTrader",
+            "ouOdd": 1.55
         },
         {
             "date": iso,
@@ -74,18 +54,9 @@ def base_games(day: date):
             "oddX": 3.40,
             "odd2": 4.20,
             "tipMain": "1",
-            "oddMain": 1.85,
-            "valueMain": 0.05,
-            "confidenceMain": 4,
             "bttsTip": "Não",
-            "bttsOdd": 1.80,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
             "ouTip": "Under 2.5",
-            "ouOdd": 1.75,
-            "valueOU": 0.03,
-            "confidenceOU": 4,
-            "source": "SportyTrader",
+            "ouOdd": 1.75
         },
         {
             "date": iso,
@@ -96,18 +67,9 @@ def base_games(day: date):
             "oddX": 3.70,
             "odd2": 3.90,
             "tipMain": "BTTS",
-            "oddMain": 1.50,
-            "valueMain": 0.04,
-            "confidenceMain": 4,
             "bttsTip": "Sim",
-            "bttsOdd": 1.50,
-            "valueBTTS": 0.04,
-            "confidenceBTTS": 4,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.55,
-            "valueOU": 0.03,
-            "confidenceOU": 4,
-            "source": "FST + Skores",
+            "ouOdd": 1.55
         },
         {
             "date": iso,
@@ -118,18 +80,9 @@ def base_games(day: date):
             "oddX": 3.20,
             "odd2": 3.60,
             "tipMain": "1X",
-            "oddMain": 1.45,
-            "valueMain": 0.03,
-            "confidenceMain": 4,
             "bttsTip": "Não",
-            "bttsOdd": 1.90,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
             "ouTip": "Under 2.5",
-            "ouOdd": 1.70,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "SportyTrader",
+            "ouOdd": 1.70
         },
         {
             "date": iso,
@@ -140,18 +93,9 @@ def base_games(day: date):
             "oddX": 4.30,
             "odd2": 7.00,
             "tipMain": "1",
-            "oddMain": 1.45,
-            "valueMain": 0.06,
-            "confidenceMain": 5,
             "bttsTip": "Sim",
-            "bttsOdd": 1.95,
-            "valueBTTS": 0.03,
-            "confidenceBTTS": 3,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.60,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "FreeSuperTips + Skores",
+            "ouOdd": 1.60
         },
         {
             "date": iso,
@@ -162,18 +106,9 @@ def base_games(day: date):
             "oddX": 3.80,
             "odd2": 4.00,
             "tipMain": "1",
-            "oddMain": 1.75,
-            "valueMain": 0.05,
-            "confidenceMain": 4,
             "bttsTip": "Sim",
-            "bttsOdd": 1.55,
-            "valueBTTS": 0.04,
-            "confidenceBTTS": 4,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.60,
-            "valueOU": 0.03,
-            "confidenceOU": 4,
-            "source": "FST",
+            "ouOdd": 1.60
         },
         {
             "date": iso,
@@ -184,18 +119,9 @@ def base_games(day: date):
             "oddX": 3.90,
             "odd2": 5.20,
             "tipMain": "1",
-            "oddMain": 1.65,
-            "valueMain": 0.05,
-            "confidenceMain": 4,
             "bttsTip": "Não",
-            "bttsOdd": 1.75,
-            "valueBTTS": 0.02,
-            "confidenceBTTS": 3,
             "ouTip": "Under 2.5",
-            "ouOdd": 1.85,
-            "valueOU": 0.02,
-            "confidenceOU": 3,
-            "source": "SportyTrader",
+            "ouOdd": 1.85
         },
         {
             "date": iso,
@@ -206,18 +132,9 @@ def base_games(day: date):
             "oddX": 3.60,
             "odd2": 4.10,
             "tipMain": "Over 2.5",
-            "oddMain": 1.65,
-            "valueMain": 0.04,
-            "confidenceMain": 4,
             "bttsTip": "Sim",
-            "bttsOdd": 1.50,
-            "valueBTTS": 0.04,
-            "confidenceBTTS": 4,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.65,
-            "valueOU": 0.04,
-            "confidenceOU": 4,
-            "source": "FST + Skores",
+            "ouOdd": 1.65
         },
         {
             "date": iso,
@@ -228,101 +145,75 @@ def base_games(day: date):
             "oddX": 3.70,
             "odd2": 3.40,
             "tipMain": "BTTS",
-            "oddMain": 1.60,
-            "valueMain": 0.04,
-            "confidenceMain": 4,
             "bttsTip": "Sim",
-            "bttsOdd": 1.60,
-            "valueBTTS": 0.04,
-            "confidenceBTTS": 4,
             "ouTip": "Over 2.5",
-            "ouOdd": 1.75,
-            "valueOU": 0.03,
-            "confidenceOU": 4,
-            "source": "Stats + FST",
-        },
+            "ouOdd": 1.75
+        }
     ]
 
 
+# -------------------------
+#     IA SIMPLES
+# -------------------------
 def add_ai_to_games(games):
-    """
-    Adiciona campos simples de IA com base nas odds do jogo.
-    Versão grátis apenas para testar comportamento.
-    """
-    jogos_com_ia = []
+    jogos = []
 
-    for g in games:
-        game = g.copy()
+    for game in games:
+        g = game.copy()
 
-        odd1 = game.get("odd1") or 0
-        oddX = game.get("oddX") or 0
-        odd2 = game.get("odd2") or 0
-        ou_tip = (game.get("ouTip") or "").lower()
-        ou_odd = game.get("ouOdd") or 0
+        odd1 = g.get("odd1") or 0
+        oddX = g.get("oddX") or 0
+        odd2 = g.get("odd2") or 0
+        ou_tip = (g.get("ouTip") or "").lower()
+        ou_odd = g.get("ouOdd") or 0
 
-        # --- IA Tip 1X2 (odd mais baixa = tip mais provável) ---
-        valids = [v for v in [odd1, oddX, odd2] if v]
-        lowest = min(valids) if valids else 0
-
-        if lowest and lowest == odd1:
-            ai_tip_main = "1"
-        elif lowest and lowest == oddX:
-            ai_tip_main = "X"
-        elif lowest and lowest == odd2:
-            ai_tip_main = "2"
+        # IA Tip principal (odd mais baixa)
+        odds_validas = [v for v in [odd1, oddX, odd2] if v]
+        if odds_validas:
+            menor = min(odds_validas)
+            if menor == odd1: ai_main = "1"
+            elif menor == oddX: ai_main = "X"
+            else: ai_main = "2"
         else:
-            ai_tip_main = "Indefinido"
+            ai_main = "Indefinido"
 
-        # --- IA BTTS ---
-        if "over" in ou_tip and ou_odd and ou_odd <= 1.70:
+        # IA BTTS
+        if "over" in ou_tip and ou_odd <= 1.70:
             ai_btts = "Sim"
-        elif "under" in ou_tip and ou_odd and ou_odd <= 1.80:
+        elif "under" in ou_tip and ou_odd <= 1.80:
             ai_btts = "Não"
         else:
             ai_btts = "Indefinido"
 
-        # --- IA Over/Under ---
+        # IA Over/Under
         if ou_tip:
-            ai_ou = game.get("ouTip")
+            ai_ou = g["ouTip"]
         else:
-            if lowest and lowest < 1.70:
-                ai_ou = "Over 2.5"
-            elif lowest and lowest > 2.20:
-                ai_ou = "Under 2.5"
-            else:
-                ai_ou = "Neutro"
+            ai_ou = "Over 2.5" if menor < 1.70 else "Under 2.5"
 
-        # --- Confiança (0–10) ---
-        confiança = 5
-        if lowest and lowest <= 1.60:
-            confiança += 2
-        elif lowest and lowest <= 1.80:
-            confiança += 1
+        # Confiança
+        conf = 5
+        if odd1 <= 1.60 or odd2 <= 1.60: conf += 2
+        if ou_odd <= 1.60: conf += 1
+        conf = max(3, min(10, conf))
 
-        if ou_odd and ou_odd <= 1.60:
-            confiança += 1
+        g["aiTipMain"] = ai_main
+        g["aiBTTS"] = ai_btts
+        g["aiOU"] = ai_ou
+        g["aiConfidence"] = conf
+        g["aiComment"] = f"IA: {ai_main}, {ai_btts}, {ai_ou} (confiança {conf}/10)"
 
-        confiança = max(3, min(10, confiança))
+        jogos.append(g)
 
-        comentario = (
-            f"IA simples: odd mais forte aponta para {ai_tip_main}, "
-            f"tendência {ai_ou} e BTTS {ai_btts}."
-        )
-
-        game["aiTipMain"] = ai_tip_main
-        game["aiBTTS"] = ai_btts
-        game["aiOU"] = ai_ou
-        game["aiConfidence"] = confiança
-        game["aiComment"] = comentario
-
-        jogos_com_ia.append(game)
-
-    return jogos_com_ia
+    return jogos
 
 
+# -------------------------
+#     ENDPOINTS
+# -------------------------
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Backend Nuno com IA simples ativo"}
+    return {"status": "ok", "message": "Backend Nuno + IA ativo"}
 
 
 @app.get("/api/jogos-hoje")
