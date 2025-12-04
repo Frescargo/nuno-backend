@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date, timedelta
-import requests
+from urllib.request import urlopen
 import csv
 import io
 
 app = FastAPI()
 
-# CORS para permitir acesso do painel (Netlify, telemóvel, etc.)
+# CORS – permite que o painel Netlify aceda à API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,9 +17,8 @@ app.add_middleware(
 )
 
 # -------------------------------------------------
-#  CONFIGURAÇÃO: LINK DA GOOGLE SHEET DO NUNO
+#  LINK DA TUA GOOGLE SHEET (versão CSV)
 # -------------------------------------------------
-# Usamos a versão CSV da sheet publicada
 GOOGLE_SHEET_CSV_URL = (
     "https://docs.google.com/spreadsheets/d/e/"
     "2PACX-1vRKUNPk2FnssvdL0sPFTIVudchDX4X--_mhp5TXTqRqBiA2WmjQL2Kf0FMT_xE-Fv5i9R_7ttJUYygL"
@@ -28,43 +27,44 @@ GOOGLE_SHEET_CSV_URL = (
 
 
 # -------------------------------------------------
-#  FUNÇÃO: LER JOGOS DA GOOGLE SHEET
+#  LER JOGOS DA GOOGLE SHEET
 # -------------------------------------------------
 def fetch_games_from_sheet(day: date):
     """
-    Lê a Google Sheet publicada, filtra apenas os jogos da data 'day'
-    e devolve uma lista de jogos no formato que o painel espera.
+    Lê a Google Sheet publicada em CSV, filtra apenas os jogos da data 'day'
+    e devolve uma lista de dicionários.
+    Espera colunas: date, league, home, away, odd1, oddX, odd2, tipMain, bttsTip, ouTip, ouOdd
     """
-
     try:
-        resp = requests.get(GOOGLE_SHEET_CSV_URL, timeout=10)
-        resp.raise_for_status()
+        with urlopen(GOOGLE_SHEET_CSV_URL, timeout=10) as resp:
+            raw = resp.read().decode("utf-8")
     except Exception as e:
         print("ERRO AO LER GOOGLE SHEET:", e)
         return []
 
-    text = resp.text
-    reader = csv.DictReader(io.StringIO(text))
-
+    reader = csv.DictReader(io.StringIO(raw))
     jogos = []
 
     for row in reader:
-        # Esperamos colunas: date, league, home, away, odd1, oddX, odd2, tipMain, bttsTip, ouTip, ouOdd
+        # data em texto
         raw_date = (row.get("date") or "").strip()
         if not raw_date:
             continue
 
+        # aceitar datas com / ou -
+        raw_date = raw_date.replace("/", "-")
+
         try:
-raw_date = (row.get("date") or "").strip()
-raw_date = raw_date.replace("/", "-")  # aceita 2025/12/04 e 2025-12-04
-try:
-    row_date = date.fromisoformat(raw_date)
-except ValueError:
-    continue
-        if row_date != day:
-            # Só queremos jogos da data pedida
+            row_date = date.fromisoformat(raw_date)
+        except ValueError:
+            # data inválida → ignora
             continue
 
+        # só queremos jogos do dia pedido
+        if row_date != day:
+            continue
+
+        # helper para converter texto em float
         def to_float(v):
             if v is None:
                 return None
@@ -90,7 +90,7 @@ except ValueError:
             "ouOdd": to_float(row.get("ouOdd")),
         }
 
-        # Ignora linhas sem equipas
+        # ignora linhas sem equipas
         if not jogo["home"] or not jogo["away"]:
             continue
 
@@ -243,7 +243,7 @@ def base_games(day: date):
 
 
 # -------------------------------------------------
-#  IA SIMPLES PARA OS JOGOS
+#  IA SIMPLES PARA CADA JOGO
 # -------------------------------------------------
 def add_ai_to_games(games):
     jogos = []
@@ -257,8 +257,8 @@ def add_ai_to_games(games):
         ou_tip = (g.get("ouTip") or "").lower()
         ou_odd = g.get("ouOdd") or 0
 
-        # TIP PRINCIPAL (odd mais baixa)
-        odds_validas = [v for v in [odd1, oddX, odd2] if v]
+        # TIP 1X2 PRINCIPAL (menor odd)
+        odds_validas = [v for v in (odd1, oddX, odd2) if v]
         if odds_validas:
             menor = min(odds_validas)
             if menor == odd1:
@@ -270,7 +270,7 @@ def add_ai_to_games(games):
         else:
             ai_main = "Indefinido"
 
-        # BTTS
+        # BTTS por cima de OU
         if "over" in ou_tip and ou_odd and ou_odd <= 1.70:
             ai_btts = "Sim"
         elif "under" in ou_tip and ou_odd and ou_odd <= 1.80:
@@ -278,17 +278,16 @@ def add_ai_to_games(games):
         else:
             ai_btts = "Indefinido"
 
-        # Over / Under
+        # Over / Under estimado
         if ou_tip:
             ai_ou = g.get("ouTip") or ""
         else:
-            # fallback se não tiver ouTip
             if odds_validas and menor < 1.70:
                 ai_ou = "Over 2.5"
             else:
                 ai_ou = "Under 2.5"
 
-        # Confiança
+        # Confiança IA
         conf = 5
         if odd1 and odd1 <= 1.60 or odd2 and odd2 <= 1.60:
             conf += 2
@@ -320,7 +319,6 @@ def jogos_hoje():
     hoje = date.today()
     jogos = fetch_games_from_sheet(hoje)
     if not jogos:
-        # fallback para base manual
         jogos = base_games(hoje)
     return add_ai_to_games(jogos)
 
