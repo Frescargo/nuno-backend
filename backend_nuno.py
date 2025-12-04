@@ -55,11 +55,12 @@ def fetch_games_from_sheet(day: date):
             continue
 
         try:
-            row_date = date.fromisoformat(raw_date)
-        except ValueError:
-            # Ignora linhas com datas inválidas
-            continue
-
+raw_date = (row.get("date") or "").strip()
+raw_date = raw_date.replace("/", "-")  # aceita 2025/12/04 e 2025-12-04
+try:
+    row_date = date.fromisoformat(raw_date)
+except ValueError:
+    continue
         if row_date != day:
             # Só queremos jogos da data pedida
             continue
