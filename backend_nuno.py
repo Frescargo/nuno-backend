@@ -244,82 +244,104 @@ def base_games(day: date):
 
 
 # -------------------------------------------------
-#  IA AVANÇADA E MAIS AGRESSIVA
+#  IA AJUSTADA (FOCA-SE EM AVALIAR AS TUAS TIPS)
 # -------------------------------------------------
 def add_ai_to_games(games):
     """
-    Adiciona previsões da IA a cada jogo, com confiança mais agressiva.
-    Usa:
-      - odds 1X2 (odd1, oddX, odd2)
-      - mercado OU (ouTip, ouOdd)
-      - tips manuais (tipMain, bttsTip, ouTip)
+    Adiciona previsões da IA a cada jogo, dando mais peso às tuas tips.
+    - Calcula favorito pelas odds 1X2
+    - Usa OU/BTTS como apoio
+    - Avalia alinhamento entre a tua tip e o que as odds sugerem
+    - Produz confiança entre 3 e 10 (mais afinada)
     """
     jogos = []
 
     for game in games:
         g = game.copy()
 
-        # --- Ler dados básicos ---
         odd1 = g.get("odd1") or 0
         oddX = g.get("oddX") or 0
         odd2 = g.get("odd2") or 0
-        ou_tip = (g.get("ouTip") or "").strip().lower()
+        ou_tip_raw = (g.get("ouTip") or "").strip()
+        ou_tip = ou_tip_raw.lower()
         ou_odd = g.get("ouOdd") or 0
 
         manual_main = (g.get("tipMain") or "").strip().upper()
         manual_btts = (g.get("bttsTip") or "").strip().upper()
-        manual_ou = ou_tip  # já em lower
 
-        # --- TIP PRINCIPAL 1X2 (IA) ---
-        odds_validas = [v for v in (odd1, oddX, odd2) if v]
-        if odds_validas:
-            menor = min(odds_validas)
-            if menor == odd1:
-                ai_main = "1"
-            elif menor == oddX:
-                ai_main = "X"
-            else:
-                ai_main = "2"
+        # ---------------------------
+        #  PROBABILIDADES 1X2 PELAS ODDS
+        # ---------------------------
+        probs = {}
+        if odd1 and odd1 > 1.01:
+            probs["1"] = 1.0 / odd1
+        if oddX and oddX > 1.01:
+            probs["X"] = 1.0 / oddX
+        if odd2 and odd2 > 1.01:
+            probs["2"] = 1.0 / odd2
+
+        best_key = None
+        norm_probs = {}
+
+        if probs:
+            total_p = sum(probs.values())
+            if total_p > 0:
+                for k, v in probs.items():
+                    norm_probs[k] = v / total_p
+                best_key = max(norm_probs, key=norm_probs.get)
+
+        # Sugestão 1X2 da IA (modelo)
+        if best_key:
+            model_main = best_key  # "1", "X" ou "2"
         else:
-            ai_main = "INDEFINIDO"
+            model_main = "INDEFINIDO"
 
-        # --- BTTS (IA) ---
-        if "over" in ou_tip and ou_odd and ou_odd <= 1.90:
+        # aiTipMain: a IA sugere o favorito das odds,
+        # mas não substitui a tua tip – só avalia
+        ai_main = model_main
+
+        # ---------------------------
+        #  BTTS PELAS ODDS DE OVER/UNDER
+        # ---------------------------
+        if "over 3.5" in ou_tip and ou_odd and ou_odd <= 2.20:
             ai_btts = "SIM"
-        elif "under" in ou_tip and ou_odd and ou_odd <= 1.85:
+        elif "over 2.5" in ou_tip and ou_odd and ou_odd <= 1.90:
+            ai_btts = "SIM"
+        elif "under 2.5" in ou_tip and ou_odd and ou_odd <= 1.80:
             ai_btts = "NÃO"
         else:
             ai_btts = "INDEFINIDO"
 
-        # --- Over/Under (IA) ---
-        if ou_tip:
-            ai_ou = g.get("ouTip") or ""
+        # ---------------------------
+        #  OVER/UNDER PELAS ODDS
+        # ---------------------------
+        if ou_tip_raw:
+            ai_ou = ou_tip_raw
         else:
-            if odds_validas and min(odds_validas) < 1.70:
+            # fallback: se favorito muito forte, tendência para Over
+            if best_key and norm_probs.get(best_key, 0) >= 0.60:
                 ai_ou = "Over 2.5"
             else:
                 ai_ou = "Under 2.5"
 
-        # -------------------------------------------------
-        #   CONFIANÇA MAIS AGRESSIVA
-        # -------------------------------------------------
+        # ---------------------------
+        #  CONFIDENCE – AFINADA
+        # ---------------------------
         score = 0
 
-        # 1) Força do favorito 1X2
-        if odds_validas:
-            fav = min(odds_validas)
-            if fav <= 1.30:
-                score += 5  # super favorito
-            elif fav <= 1.45:
+        # 1) Quão claro é o favorito 1X2?
+        if best_key and norm_probs:
+            fav_p = norm_probs.get(best_key, 0)
+            if fav_p >= 0.70:
                 score += 4
-            elif fav <= 1.60:
+            elif fav_p >= 0.60:
                 score += 3
-            elif fav <= 1.80:
+            elif fav_p >= 0.55:
                 score += 2
             else:
                 score += 1
 
-        # 2) Força do mercado OU
+        # 2) Força do mercado OU (odd baixa = mercado “forte”)
         if ou_odd:
             if ou_odd <= 1.40:
                 score += 3
@@ -328,24 +350,24 @@ def add_ai_to_games(games):
             elif ou_odd <= 1.80:
                 score += 1
 
-        # 3) Alinhamento IA x Tip manual 1X2
-        if manual_main in ("1", "X", "2") and ai_main in ("1", "X", "2"):
-            if manual_main == ai_main:
-                score += 3   # estás de acordo com a IA
+        # 3) Alinhamento tua tip 1X2 vs odds
+        if manual_main in ("1", "X", "2") and model_main in ("1", "X", "2"):
+            if manual_main == model_main:
+                score += 3   # estás alinhado com o favorito do mercado
             else:
-                score -= 1   # conflito com a IA
+                score -= 2   # estás contra o favorito
 
-        # 4) Alinhamento BTTS manual x IA
+        # 4) Alinhamento BTTS
         if manual_btts in ("SIM", "NÃO") and ai_btts in ("SIM", "NÃO"):
             if manual_btts == ai_btts:
                 score += 2
             else:
                 score -= 1
 
-        # 5) Alinhamento Over/Under manual x IA
-        if manual_ou:
-            manual_over = "over" in manual_ou
-            manual_under = "under" in manual_ou
+        # 5) Alinhamento Over/Under
+        if ou_tip:
+            manual_over = "over" in ou_tip
+            manual_under = "under" in ou_tip
             ai_over = "over" in ai_ou.lower()
             ai_under = "under" in ai_ou.lower()
 
@@ -354,20 +376,23 @@ def add_ai_to_games(games):
             elif (manual_over and ai_under) or (manual_under and ai_over):
                 score -= 1
 
-        # 6) Normalizar para escala 3–10 (agressivo)
-        agressivo = score + 3  # empurra a escala para cima
+        # Base de 5, para não ficar demasiado baixa
+        conf = 5 + score
 
-        if agressivo < 3:
-            agressivo = 3
-        if agressivo > 10:
-            agressivo = 10
+        # Agressivo mas controlado: entre 3 e 10
+        if conf < 3:
+            conf = 3
+        if conf > 10:
+            conf = 10
 
         g["aiTipMain"] = ai_main
         g["aiBTTS"] = ai_btts
         g["aiOU"] = ai_ou
-        g["aiConfidence"] = agressivo
+        g["aiConfidence"] = conf
         g["aiComment"] = (
-            f"IA: {ai_main}, BTTS {ai_btts}, {ai_ou} (confiança {agressivo}/10)"
+            f"Odds indicam {ai_main}, BTTS {ai_btts}, {ai_ou}. "
+            f"Tua tip: {manual_main or '-'}, BTTS {manual_btts or '-'}, OU {ou_tip_raw or '-'} "
+            f"(confiança {conf}/10)."
         )
 
         jogos.append(g)
@@ -380,7 +405,10 @@ def add_ai_to_games(games):
 # -------------------------------------------------
 @app.get("/")
 def root():
-    return {"status": "online", "message": "Backend Nuno Deca Football AI ativo (versão IA agressiva)."}
+    return {
+        "status": "online",
+        "message": "Backend Nuno Deca Football AI ativo (IA ajustada para avaliar as tuas tips).",
+    }
 
 
 @app.get("/api/jogos-hoje")
