@@ -35,13 +35,13 @@ GOOGLE_SHEET_CSV_URL = (
 # -------------------------------------------------
 API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "").strip()
 
-# cache simples para IDs de equipas e estatísticas
+# caches simples para não repetir chamadas
 _TEAM_ID_CACHE = {}
 _TEAM_STATS_CACHE = {}
 
 
 # -------------------------------------------------
-#  FUNÇÕES AUXILIARES PARA LER A SHEET
+#  LER JOGOS DA GOOGLE SHEET
 # -------------------------------------------------
 def fetch_games_from_sheet(day: date):
     """
@@ -304,7 +304,6 @@ def get_team_id(team_name: str):
     if not res or not res.get("response"):
         return None
 
-    # tentar correspondência mais próxima possível
     found_id = None
     for entry in res["response"]:
         t = (entry.get("team") or {})
@@ -367,7 +366,6 @@ def get_team_recent_stats(team_id: int, last_n: int = 5):
             gf = g_away
             ga = g_home
         else:
-            # fallback: considerar perspectiva casa
             gf = g_home
             ga = g_away
 
