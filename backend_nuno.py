@@ -354,6 +354,7 @@ def get_team_recent_stats(team_id: int, last_n: int = 5):
         home_team = (teams.get("home") or {}).get("id")
         away_team = (teams.get("away") or {}).get("id")
 
+        # assume GF/GA da perspetiva da própria equipa
         if team_id == home_team:
             gf = g_home
             ga = g_away
@@ -422,14 +423,14 @@ def get_match_stats(home_name: str, away_name: str):
 
 
 # -------------------------------------------------
-#  IA AVANÇADA: AVALIA AS TUAS TIPS + ESTATÍSTICAS
+#  IA AVANÇADA (MODO SEGURO)
 # -------------------------------------------------
 def add_ai_to_games(games):
     """
     Adiciona previsões da IA a cada jogo.
-    - Usa odds 1X2, OU e BTTS
-    - Usa estatísticas recentes da API-FOOTBALL (quando possível)
-    - Avalia a qualidade das tuas tips e ajusta confiança
+    Modo A (seguro):
+      - Confiança entre 4 e 9
+      - Estatísticas só aumentam muito a confiança quando são fortes e consistentes
     """
     jogos = []
 
@@ -446,9 +447,7 @@ def add_ai_to_games(games):
         manual_main = (g.get("tipMain") or "").strip().upper()
         manual_btts = (g.get("bttsTip") or "").strip().upper()
 
-        # ---------------------------
-        #  PROBABILIDADES 1X2 PELAS ODDS
-        # ---------------------------
+        # PROBABILIDADES IMPLÍCITAS 1X2
         probs = {}
         if odd1 and odd1 > 1.01:
             probs["1"] = 1.0 / odd1
@@ -468,15 +467,13 @@ def add_ai_to_games(games):
                 best_key = max(norm_probs, key=norm_probs.get)
 
         if best_key:
-            model_main = best_key  # "1", "X" ou "2"
+            model_main = best_key
         else:
             model_main = "INDEFINIDO"
 
         ai_main = model_main
 
-        # ---------------------------
-        #  BTTS PELAS ODDS DE OVER/UNDER
-        # ---------------------------
+        # BTTS PELAS ODDS DE GOL0S
         if "over 3.5" in ou_tip and ou_odd and ou_odd <= 2.20:
             ai_btts = "SIM"
         elif "over 2.5" in ou_tip and ou_odd and ou_odd <= 1.90:
@@ -486,9 +483,7 @@ def add_ai_to_games(games):
         else:
             ai_btts = "INDEFINIDO"
 
-        # ---------------------------
-        #  OVER/UNDER PELAS ODDS
-        # ---------------------------
+        # OVER/UNDER DEFAULT
         if ou_tip_raw:
             ai_ou = ou_tip_raw
         else:
@@ -497,42 +492,41 @@ def add_ai_to_games(games):
             else:
                 ai_ou = "Under 2.5"
 
-        # ---------------------------
-        #  BASE DE SCORE (ODDS + TUA TIP)
-        # ---------------------------
+        # SCORE BASE (modo seguro)
         score = 0
 
+        # 1) Favoritismo claro
         if best_key and norm_probs:
             fav_p = norm_probs.get(best_key, 0)
             if fav_p >= 0.70:
-                score += 4
-            elif fav_p >= 0.60:
                 score += 3
-            elif fav_p >= 0.55:
+            elif fav_p >= 0.60:
                 score += 2
-            else:
+            elif fav_p >= 0.55:
                 score += 1
 
+        # 2) Força do mercado no OU
         if ou_odd:
             if ou_odd <= 1.40:
-                score += 3
-            elif ou_odd <= 1.60:
                 score += 2
-            elif ou_odd <= 1.80:
+            elif ou_odd <= 1.60:
                 score += 1
 
+        # 3) Alinhamento tua tip 1X2 vs mercado
         if manual_main in ("1", "X", "2") and model_main in ("1", "X", "2"):
             if manual_main == model_main:
-                score += 3
+                score += 2
             else:
                 score -= 2
 
+        # 4) Alinhamento BTTS
         if manual_btts in ("SIM", "NÃO") and ai_btts in ("SIM", "NÃO"):
             if manual_btts == ai_btts:
-                score += 2
+                score += 1
             else:
                 score -= 1
 
+        # 5) Alinhamento Over/Under
         if ou_tip:
             manual_over = "over" in ou_tip
             manual_under = "under" in ou_tip
@@ -540,31 +534,30 @@ def add_ai_to_games(games):
             ai_under = "under" in ai_ou.lower()
 
             if (manual_over and ai_over) or (manual_under and ai_under):
-                score += 2
+                score += 1
             elif (manual_over and ai_under) or (manual_under and ai_over):
                 score -= 1
 
-        # ---------------------------
-        #  ESTATÍSTICAS AVANÇADAS (API-FOOTBALL)
-        # ---------------------------
+        # ESTATÍSTICAS API-FOOTBALL
         stats = None
-        if API_FOOTBALL_KEY:
+        stats_comment = ""
+        if API_FOOTBALL_KEY and g.get("home") and g.get("away"):
             try:
                 stats = get_match_stats(g.get("home"), g.get("away"))
             except Exception as e:
                 print("ERROR MATCH_STATS:", e)
                 stats = None
 
-        stats_comment = ""
         if stats:
-            btts_rate = stats["btts_combined"]
-            over25_rate = stats["over25_combined"]
-            goals_avg = stats["goals_total_avg"]
+            btts_rate = stats["btts_combined"]      # 0–1
+            over25_rate = stats["over25_combined"]  # 0–1
+            goals_avg = stats["goals_total_avg"]    # média golos
 
+            # BTTS
             if btts_rate >= 0.70:
                 stats_comment += f"BTTS forte ({btts_rate*100:.0f}%). "
                 if manual_btts == "SIM":
-                    score += 3
+                    score += 2
                 elif manual_btts == "NÃO":
                     score -= 2
                 elif ai_btts == "INDEFINIDO":
@@ -572,10 +565,11 @@ def add_ai_to_games(games):
             elif btts_rate <= 0.35:
                 stats_comment += f"BTTS fraco ({btts_rate*100:.0f}%). "
                 if manual_btts == "NÃO":
-                    score += 2
+                    score += 1
                 elif manual_btts == "SIM":
-                    score -= 2
+                    score -= 1
 
+            # Over 2.5
             if over25_rate >= 0.70 or goals_avg >= 3.0:
                 stats_comment += f"Over 2.5 forte ({over25_rate*100:.0f}% / média golos {goals_avg:.2f}). "
                 if "over" in ai_ou.lower():
@@ -589,11 +583,12 @@ def add_ai_to_games(games):
                 else:
                     ai_ou = "Under 2.5"
 
+        # Confiança base 5 (modo seguro)
         conf = 5 + score
-        if conf < 3:
-            conf = 3
-        if conf > 10:
-            conf = 10
+        if conf < 4:
+            conf = 4
+        if conf > 9:
+            conf = 9
 
         g["aiTipMain"] = ai_main
         g["aiBTTS"] = ai_btts
@@ -605,8 +600,11 @@ def add_ai_to_games(games):
         comment_parts.append(f"BTTS: {ai_btts}")
         comment_parts.append(f"OU: {ai_ou}")
         comment_parts.append(f"Confiança {conf}/10")
+
         if stats_comment:
             comment_parts.append(stats_comment.strip())
+        else:
+            comment_parts.append("Sem estatísticas recentes suficientes – baseado apenas em odds e tips.")
 
         g["aiComment"] = " | ".join(comment_parts)
 
@@ -622,7 +620,7 @@ def add_ai_to_games(games):
 def root():
     return {
         "status": "online",
-        "message": "Backend Nuno Deca Football AI ativo (IA avançada com estatísticas, quando disponíveis).",
+        "message": "Backend Nuno Deca Football AI ativo (modo seguro, com estatísticas quando disponíveis).",
     }
 
 
