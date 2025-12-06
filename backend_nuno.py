@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date, timedelta
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 import csv
 import io
+import os
+import json
+import urllib.parse
 
 app = FastAPI()
 
@@ -27,9 +30,18 @@ GOOGLE_SHEET_CSV_URL = (
     "/pub?gid=0&single=true&output=csv"
 )
 
+# -------------------------------------------------
+#  CHAVE DA API-FOOTBALL (vem das variáveis de ambiente do Render)
+# -------------------------------------------------
+API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "").strip()
+
+# cache simples para IDs de equipas e estatísticas
+_TEAM_ID_CACHE = {}
+_TEAM_STATS_CACHE = {}
+
 
 # -------------------------------------------------
-#  LER JOGOS DA GOOGLE SHEET
+#  FUNÇÕES AUXILIARES PARA LER A SHEET
 # -------------------------------------------------
 def fetch_games_from_sheet(day: date):
     """
@@ -244,15 +256,187 @@ def base_games(day: date):
 
 
 # -------------------------------------------------
-#  IA AJUSTADA (FOCA-SE EM AVALIAR AS TUAS TIPS)
+#  FUNÇÕES PARA LIGAR À API-FOOTBALL (ESTATÍSTICAS)
+# -------------------------------------------------
+def api_football_get(path: str, params: dict):
+    """
+    Faz um GET à API-FOOTBALL.
+    Se não houver chave ou der erro, devolve None.
+    """
+    if not API_FOOTBALL_KEY:
+        return None
+
+    base_url = "https://v3.football.api-sports.io"
+    url = base_url + path
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+
+    headers = {
+        "x-apisports-key": API_FOOTBALL_KEY,
+    }
+
+    req = Request(url, headers=headers)
+    try:
+        with urlopen(req, timeout=10) as resp:
+            data = resp.read().decode("utf-8")
+            return json.loads(data)
+    except Exception as e:
+        print("API_FOOTBALL ERROR:", e)
+        return None
+
+
+def get_team_id(team_name: str):
+    """
+    Procura o ID da equipa na API-FOOTBALL.
+    Usa cache simples para não repetir pedidos.
+    """
+    if not API_FOOTBALL_KEY:
+        return None
+
+    key = (team_name or "").strip().lower()
+    if not key:
+        return None
+
+    if key in _TEAM_ID_CACHE:
+        return _TEAM_ID_CACHE[key]
+
+    res = api_football_get("/teams", {"search": team_name})
+    if not res or not res.get("response"):
+        return None
+
+    # tentar correspondência mais próxima possível
+    found_id = None
+    for entry in res["response"]:
+        t = (entry.get("team") or {})
+        name = (t.get("name") or "").strip().lower()
+        if name == key or key in name or name in key:
+            found_id = t.get("id")
+            break
+
+    if not found_id:
+        try:
+            found_id = res["response"][0]["team"]["id"]
+        except Exception:
+            return None
+
+    _TEAM_ID_CACHE[key] = found_id
+    return found_id
+
+
+def get_team_recent_stats(team_id: int, last_n: int = 5):
+    """
+    Lê os últimos N jogos da equipa na API-FOOTBALL e calcula:
+      - média golos marcados
+      - média golos sofridos
+      - % BTTS
+      - % Over 2.5
+    Usa cache simples por equipa.
+    """
+    if not API_FOOTBALL_KEY or not team_id:
+        return None
+
+    cache_key = f"{team_id}_{last_n}"
+    if cache_key in _TEAM_STATS_CACHE:
+        return _TEAM_STATS_CACHE[cache_key]
+
+    res = api_football_get("/fixtures", {"team": team_id, "last": last_n})
+    if not res or not res.get("response"):
+        return None
+
+    total_gf = 0
+    total_ga = 0
+    matches = 0
+    btts = 0
+    over25 = 0
+
+    for fx in res["response"]:
+        goals = fx.get("goals") or {}
+        g_home = goals.get("home")
+        g_away = goals.get("away")
+        if g_home is None or g_away is None:
+            continue
+
+        teams = fx.get("teams") or {}
+        home_team = (teams.get("home") or {}).get("id")
+        away_team = (teams.get("away") or {}).get("id")
+
+        if team_id == home_team:
+            gf = g_home
+            ga = g_away
+        elif team_id == away_team:
+            gf = g_away
+            ga = g_home
+        else:
+            # fallback: considerar perspectiva casa
+            gf = g_home
+            ga = g_away
+
+        matches += 1
+        total_gf += gf
+        total_ga += ga
+
+        if gf > 0 and ga > 0:
+            btts += 1
+
+        if (gf + ga) >= 3:
+            over25 += 1
+
+    if matches == 0:
+        return None
+
+    stats = {
+        "matches": matches,
+        "avg_for": total_gf / matches,
+        "avg_against": total_ga / matches,
+        "btts_rate": btts / matches,
+        "over25_rate": over25 / matches,
+    }
+
+    _TEAM_STATS_CACHE[cache_key] = stats
+    return stats
+
+
+def get_match_stats(home_name: str, away_name: str):
+    """
+    Junta as estatísticas recentes da equipa da casa e de fora
+    e calcula alguns indicadores combinados.
+    """
+    try:
+        home_id = get_team_id(home_name)
+        away_id = get_team_id(away_name)
+        if not home_id or not away_id:
+            return None
+
+        home_stats = get_team_recent_stats(home_id, last_n=5)
+        away_stats = get_team_recent_stats(away_id, last_n=5)
+        if not home_stats or not away_stats:
+            return None
+
+        btts_combined = (home_stats["btts_rate"] + away_stats["btts_rate"]) / 2.0
+        over25_combined = (home_stats["over25_rate"] + away_stats["over25_rate"]) / 2.0
+        goals_total_avg = home_stats["avg_for"] + away_stats["avg_for"]
+
+        return {
+            "home": home_stats,
+            "away": away_stats,
+            "btts_combined": btts_combined,
+            "over25_combined": over25_combined,
+            "goals_total_avg": goals_total_avg,
+        }
+    except Exception as e:
+        print("MATCH_STATS ERROR:", e)
+        return None
+
+
+# -------------------------------------------------
+#  IA AVANÇADA: AVALIA AS TUAS TIPS + ESTATÍSTICAS
 # -------------------------------------------------
 def add_ai_to_games(games):
     """
-    Adiciona previsões da IA a cada jogo, dando mais peso às tuas tips.
-    - Calcula favorito pelas odds 1X2
-    - Usa OU/BTTS como apoio
-    - Avalia alinhamento entre a tua tip e o que as odds sugerem
-    - Produz confiança entre 3 e 10 (mais afinada)
+    Adiciona previsões da IA a cada jogo.
+    - Usa odds 1X2, OU e BTTS
+    - Usa estatísticas recentes da API-FOOTBALL (quando possível)
+    - Avalia a qualidade das tuas tips e ajusta confiança
     """
     jogos = []
 
@@ -290,14 +474,11 @@ def add_ai_to_games(games):
                     norm_probs[k] = v / total_p
                 best_key = max(norm_probs, key=norm_probs.get)
 
-        # Sugestão 1X2 da IA (modelo)
         if best_key:
             model_main = best_key  # "1", "X" ou "2"
         else:
             model_main = "INDEFINIDO"
 
-        # aiTipMain: a IA sugere o favorito das odds,
-        # mas não substitui a tua tip – só avalia
         ai_main = model_main
 
         # ---------------------------
@@ -318,14 +499,13 @@ def add_ai_to_games(games):
         if ou_tip_raw:
             ai_ou = ou_tip_raw
         else:
-            # fallback: se favorito muito forte, tendência para Over
             if best_key and norm_probs.get(best_key, 0) >= 0.60:
                 ai_ou = "Over 2.5"
             else:
                 ai_ou = "Under 2.5"
 
         # ---------------------------
-        #  CONFIDENCE – AFINADA
+        #  BASE DE SCORE (ODDS + TUA TIP)
         # ---------------------------
         score = 0
 
@@ -353,9 +533,9 @@ def add_ai_to_games(games):
         # 3) Alinhamento tua tip 1X2 vs odds
         if manual_main in ("1", "X", "2") and model_main in ("1", "X", "2"):
             if manual_main == model_main:
-                score += 3   # estás alinhado com o favorito do mercado
+                score += 3   # estás alinhado com o favorito
             else:
-                score -= 2   # estás contra o favorito
+                score -= 2   # estás contra o mercado
 
         # 4) Alinhamento BTTS
         if manual_btts in ("SIM", "NÃO") and ai_btts in ("SIM", "NÃO"):
@@ -376,10 +556,57 @@ def add_ai_to_games(games):
             elif (manual_over and ai_under) or (manual_under and ai_over):
                 score -= 1
 
+        # ---------------------------
+        #  ESTATÍSTICAS AVANÇADAS (API-FOOTBALL)
+        # ---------------------------
+        stats = None
+        if API_FOOTBALL_KEY:
+            try:
+                stats = get_match_stats(g.get("home"), g.get("away"))
+            except Exception as e:
+                print("ERROR MATCH_STATS:", e)
+                stats = None
+
+        stats_comment = ""
+        if stats:
+            btts_rate = stats["btts_combined"]
+            over25_rate = stats["over25_combined"]
+            goals_avg = stats["goals_total_avg"]
+
+            # BTTS
+            if btts_rate >= 0.70:
+                stats_comment += f"BTTS forte ({btts_rate*100:.0f}%). "
+                if manual_btts == "SIM":
+                    score += 3
+                elif manual_btts == "NÃO":
+                    score -= 2
+                elif ai_btts == "INDEFINIDO":
+                    ai_btts = "SIM"
+            elif btts_rate <= 0.35:
+                stats_comment += f"BTTS fraco ({btts_rate*100:.0f}%). "
+                if manual_btts == "NÃO":
+                    score += 2
+                elif manual_btts == "SIM":
+                    score -= 2
+
+            # Over 2.5
+            if over25_rate >= 0.70 or goals_avg >= 3.0:
+                stats_comment += f"Over 2.5 forte ({over25_rate*100:.0f}% / média golos {goals_avg:.2f}). "
+                if "over" in ai_ou.lower():
+                    score += 2
+                else:
+                    ai_ou = "Over 2.5"
+            elif over25_rate <= 0.35 or goals_avg <= 2.0:
+                stats_comment += f"Under 2.5 forte ({(1-over25_rate)*100:.0f}% / média golos {goals_avg:.2f}). "
+                if "under" in ai_ou.lower():
+                    score += 2
+                else:
+                    ai_ou = "Under 2.5"
+
         # Base de 5, para não ficar demasiado baixa
         conf = 5 + score
 
-        # Agressivo mas controlado: entre 3 e 10
+        # Limites 3–10
         if conf < 3:
             conf = 3
         if conf > 10:
@@ -389,11 +616,16 @@ def add_ai_to_games(games):
         g["aiBTTS"] = ai_btts
         g["aiOU"] = ai_ou
         g["aiConfidence"] = conf
-        g["aiComment"] = (
-            f"Odds indicam {ai_main}, BTTS {ai_btts}, {ai_ou}. "
-            f"Tua tip: {manual_main or '-'}, BTTS {manual_btts or '-'}, OU {ou_tip_raw or '-'} "
-            f"(confiança {conf}/10)."
-        )
+
+        comment_parts = []
+        comment_parts.append(f"IA 1X2: {ai_main}")
+        comment_parts.append(f"BTTS: {ai_btts}")
+        comment_parts.append(f"OU: {ai_ou}")
+        comment_parts.append(f"Confiança {conf}/10")
+        if stats_comment:
+            comment_parts.append(stats_comment.strip())
+
+        g["aiComment"] = " | ".join(comment_parts)
 
         jogos.append(g)
 
@@ -407,7 +639,7 @@ def add_ai_to_games(games):
 def root():
     return {
         "status": "online",
-        "message": "Backend Nuno Deca Football AI ativo (IA ajustada para avaliar as tuas tips).",
+        "message": "Backend Nuno Deca Football AI ativo (IA avançada com estatísticas, quando disponíveis).",
     }
 
 
