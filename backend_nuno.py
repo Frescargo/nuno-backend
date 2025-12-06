@@ -64,20 +64,16 @@ def fetch_games_from_sheet(day: date):
         if not raw_date:
             continue
 
-        # aceitar datas com / ou -
         raw_date = raw_date.replace("/", "-")
 
         try:
             row_date = date.fromisoformat(raw_date)
         except ValueError:
-            # data inválida → ignora
             continue
 
-        # só queremos jogos do dia pedido
         if row_date != day:
             continue
 
-        # helper para converter texto em float
         def to_float(v):
             if v is None:
                 return None
@@ -103,7 +99,6 @@ def fetch_games_from_sheet(day: date):
             "ouOdd": to_float(row.get("ouOdd")),
         }
 
-        # ignora linhas sem equipas
         if not jogo["home"] or not jogo["away"]:
             continue
 
@@ -507,7 +502,6 @@ def add_ai_to_games(games):
         # ---------------------------
         score = 0
 
-        # 1) Quão claro é o favorito 1X2?
         if best_key and norm_probs:
             fav_p = norm_probs.get(best_key, 0)
             if fav_p >= 0.70:
@@ -519,7 +513,6 @@ def add_ai_to_games(games):
             else:
                 score += 1
 
-        # 2) Força do mercado OU (odd baixa = mercado “forte”)
         if ou_odd:
             if ou_odd <= 1.40:
                 score += 3
@@ -528,21 +521,18 @@ def add_ai_to_games(games):
             elif ou_odd <= 1.80:
                 score += 1
 
-        # 3) Alinhamento tua tip 1X2 vs odds
         if manual_main in ("1", "X", "2") and model_main in ("1", "X", "2"):
             if manual_main == model_main:
-                score += 3   # estás alinhado com o favorito
+                score += 3
             else:
-                score -= 2   # estás contra o mercado
+                score -= 2
 
-        # 4) Alinhamento BTTS
         if manual_btts in ("SIM", "NÃO") and ai_btts in ("SIM", "NÃO"):
             if manual_btts == ai_btts:
                 score += 2
             else:
                 score -= 1
 
-        # 5) Alinhamento Over/Under
         if ou_tip:
             manual_over = "over" in ou_tip
             manual_under = "under" in ou_tip
@@ -571,7 +561,6 @@ def add_ai_to_games(games):
             over25_rate = stats["over25_combined"]
             goals_avg = stats["goals_total_avg"]
 
-            # BTTS
             if btts_rate >= 0.70:
                 stats_comment += f"BTTS forte ({btts_rate*100:.0f}%). "
                 if manual_btts == "SIM":
@@ -587,7 +576,6 @@ def add_ai_to_games(games):
                 elif manual_btts == "SIM":
                     score -= 2
 
-            # Over 2.5
             if over25_rate >= 0.70 or goals_avg >= 3.0:
                 stats_comment += f"Over 2.5 forte ({over25_rate*100:.0f}% / média golos {goals_avg:.2f}). "
                 if "over" in ai_ou.lower():
@@ -601,10 +589,7 @@ def add_ai_to_games(games):
                 else:
                     ai_ou = "Under 2.5"
 
-        # Base de 5, para não ficar demasiado baixa
         conf = 5 + score
-
-        # Limites 3–10
         if conf < 3:
             conf = 3
         if conf > 10:
